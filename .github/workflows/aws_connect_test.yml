@@ -13,11 +13,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Add mask
+      - name: Mask
         run: |
           echo "::add-mask::${{ secrets.AWS_ROLE_ARN }}"
           echo "::add-mask::${{ secrets.AWS_REGION }}"
           echo "::add-mask::${{ secrets.AWS_ACCOUNT }}"
+          echo "::add-mask::${{ secrets.AWS_ROLE_ID }}"
+          echo "::add-mask::${{ secrets.AWS_ROLE_NAME }}"
 
       - name: Checkout repository
         uses: actions/checkout@v3
