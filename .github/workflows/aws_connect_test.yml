@@ -1,0 +1,33 @@
+name: AWS Connect Test
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  CDK_DIR: cert_app
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ${{ env.CDK_DIR }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      
+      - name: Test AWS CLI access
+        run: |
+          aws sts get-caller-identity
