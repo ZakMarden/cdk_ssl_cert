@@ -2,24 +2,18 @@ name: AWS Connect Test
 
 on:
   workflow_dispatch:
-  push:
-
-permissions:
-  contents: read
-  id-token: write
-
-env:
-  CDK_DIR: cert_app
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    
-    defaults:
-      run:
-        working-directory: ${{ env.CDK_DIR }}
 
     steps:
+      - name: Add mask
+        run: |
+          echo "::add-mask::${{ secrets.AWS_ROLE_ARN }}"
+          echo "::add-mask::${{ secrets.AWS_REGION }}"
+          echo "::add-mask::${{ secrets.AWS_ACCOUNT }}"
+
       - name: Checkout repository
         uses: actions/checkout@v3
 
