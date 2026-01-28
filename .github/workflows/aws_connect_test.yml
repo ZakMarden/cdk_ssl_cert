@@ -1,0 +1,34 @@
+name: AWS Connect Test
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Mask
+        run: |
+          echo "::add-mask::${{ secrets.AWS_ROLE_ARN }}"
+          echo "::add-mask::${{ secrets.AWS_REGION }}"
+          echo "::add-mask::${{ secrets.AWS_ACCOUNT }}"
+          echo "::add-mask::${{ secrets.AWS_ROLE_ID }}"
+          echo "::add-mask::${{ secrets.AWS_ROLE_NAME }}"
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      
+      - name: Test AWS CLI access
+        run: |
+          aws sts get-caller-identity

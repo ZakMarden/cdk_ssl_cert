@@ -36,3 +36,13 @@ Now the secrets are setup they are ready to be used in our workflows - so we nee
 
 If everything has been setup correctly, this step will generate temporary access credentials, with the permissions we chose, so that subsequent steps can run AWS commands.
 
+We can test this has worked by creating a workflow to run following command;
+
+```
+aws sts get-caller-identity
+```
+
+If successful, this should return a JSON containing the UserID, Account Number, and User ARN.
+
+See [here](.github/workflows/aws_connect_test.yml) for an example workflow which uses this to test the AWS credentials. 
+
