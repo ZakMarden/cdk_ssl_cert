@@ -44,3 +44,5 @@ aws sts get-caller-identity
 
 If successful, this should return a JSON containing the UserID, Account Number, and User ARN.
 
+See [here](.github/workflows/aws_connect_test.yml) for an example workflow which uses this to test the AWS credentials. 
+
