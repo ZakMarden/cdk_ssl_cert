@@ -39,11 +39,11 @@ jobs:
           echo "::add-mask::${{ secrets.DOMAIN_NAME }}"
           echo "::add-mask::${{ secrets.HOSTED_ZONE_ID }}"
           echo "::add-mask::${{ secrets.CDK_CERT_REGION }}"
+        working-directory: .
 
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Install python and dependencies
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -59,7 +59,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: CDK Synth
         run: |
