@@ -36,6 +36,10 @@ jobs:
           echo "::add-mask::${{ secrets.HOSTED_ZONE_ID }}"
           echo "::add-mask::${{ secrets.CDK_CERT_REGION }}"
 
+      - name: Change to CDK directory
+        run: |
+          cd ${{ env.CDK_DIR }}
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -56,10 +60,6 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
-
-      - name: Change to CDK directory
-        run: |
-          cd ${{ env.CDK_DIR }}
 
       - name: CDK Synth
         run: |
