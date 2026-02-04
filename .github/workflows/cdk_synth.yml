@@ -1,0 +1,70 @@
+name: CDK Synth & Diff on PR
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'cert_app/**'
+      - '.github/workflows/cdk_synth.yml'
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  CDK_DIR: cert_app
+  AWS_ACCOUNT: ${{ secrets.AWS_ACCOUNT }}
+  CDK_CERT_REGION: ${{ secrets.CDK_CERT_REGION }}
+  DOMAIN_NAME: ${{ secrets.DOMAIN_NAME }}
+  HOSTED_ZONE_ID: ${{ secrets.HOSTED_ZONE_ID }}
+
+jobs:
+  cdk-synth:
+    name: CDK Synth & Diff
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ${{ env.CDK_DIR }}
+    
+    steps:
+      - name: Mask
+        run: |
+          echo "::add-mask::${{ secrets.AWS_ROLE_ARN }}"
+          echo "::add-mask::${{ secrets.AWS_REGION }}"
+          echo "::add-mask::${{ secrets.AWS_ACCOUNT }}"
+          echo "::add-mask::${{ secrets.AWS_ROLE_ID }}"
+          echo "::add-mask::${{ secrets.AWS_ROLE_NAME }}"
+          echo "::add-mask::${{ secrets.DOMAIN_NAME }}"
+          echo "::add-mask::${{ secrets.HOSTED_ZONE_ID }}"
+          echo "::add-mask::${{ secrets.CDK_CERT_REGION }}"
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Install python and dependencies
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          npm install -g aws-cdk
+      
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: CDK Synth
+        run: |
+          cdk synth
+
+      - name: CDK Diff
+        run: |
+          cdk diff
