@@ -44,7 +44,50 @@ aws sts get-caller-identity
 
 If successful, this should return the UserID, Account Number, and User ARN. See [here](.github/workflows/aws_connect_test.yml) for an example workflow which uses this to test the AWS credentials.
 
+### Step 3. Make the Stack
+Our stack will use the [Certificate](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_certificatemanager/Certificate.html) construct for creating the certificate itself. There are two main parameters which need to be set for this; domain_name and validation. 
 
+'domain_name' is the domain we want the certificate for (e.g. example.com), I am also using the subject_alternative_names parameter, with a wildcard (e.g. *.example.com). This means that the certificate will cover all subdomains, and the root/apex domain. 
 
+'validation' tells the certificate manager how we are going to prove that we own the domain, as I've already got a hosted zone set up, with Route53 as the DNS provider, I will use the 'from_dns' method to validate the certificate. This works on the principle that if you can add a DNS record, then you own the domain. It does this by requesting a unique CNAME record is added. A CNAME, or canonical name, is a record which redirects requests for one domain to another. This CNAME record acts as a key-value pair, in simple terms the certificate manager says; add a record to your DNS, so that requests to abc123.example.com are mapped to xyz789.aws.com. Ther certificate manager then looks up abc123.example.com, and if they find the request is mapped to xyz789.aws.com, they know the record must have been added, and that you own the domain.
+
+```
+certificate = acm.Certificate(
+      self,
+      "SiteCertificate",
+      certificate_name=f"cert-{domain_name}",
+      domain_name=domain_name,
+      subject_alternative_names=[f"*.{domain_name}"],
+      validation=acm.CertificateValidation.from_dns(hosted_zone)
+  )
+```
+
+To use this method for validation, we need to provide the hosted zone for the domain, this means we need to add a [HostedZone](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_route53/HostedZone.html) construct to our stack. As I've already got the hosted zone setup, I just need to import it into the stack, rather than create it. To do this I'll use the 'from_hosted_zone_id' method, which allows me to import the zone using it's ID.
+
+```
+hosted_zone = route53.HostedZone.from_hosted_zone_id(
+      self,
+      "HostedZone",
+      hosted_zone_id=hosted_zone_id
+  )
+```
+
+To avoid having to hardcode any sensitive details, I am passing the domain name and hosted zone id into the stack from environment variables, these need to be passed as arguments for the stack class;
+
+```
+def __init__(self, scope: Construct, construct_id: str, domain_name: str, hosted_zone_id: str, **kwargs) -> None:
+```
+
+For the variables to be accessed by the stack, they need declaring in our CDK App app.py file, as follows;
+
+```
+CertAppStack(app, "CertAppStack",
+    domain_name=os.getenv('DOMAIN_NAME'),
+    hosted_zone_id=os.getenv('HOSTED_ZONE_ID'),
+    env=cdk.Environment(account=os.getenv('AWS_ACCOUNT'), region=os.getenv('CDK_CERT_REGION')),
+    )
+```
+
+Finally, we also need to ensure that the CDK environment is set up correctly, by passing in our AWS account ID, and the region. It's important to note here that as I will be using CloudFront as the CDN for the site, the certificate needs to be in the 'us-east-1' region, which is a requirment for CloudFront to use the certificate. As seen above I am also passing these in as environment variables.
 
 
